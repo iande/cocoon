@@ -5,8 +5,12 @@
     content.replace(reg_exp, with_str);
   }
 
-  function trigger_removal_callback(node) {
-    node.parent().parent().trigger('removal-callback');
+  function trigger_removal_callback(triggerOn, removedNode) {
+    triggerOn.trigger('removal-callback', removedNode);
+  }
+  
+  function trigger_after_removal_callback(triggerOn, removedNode) {
+    triggerOn.trigger('after-removal-callback', removedNode);
   }
 
   $('.add_fields').live('click', function(e) {
@@ -15,7 +19,7 @@
         assoc                 = $this.data('association'),
         assocs                = $this.data('associations'),
         content               = $this.data('template'),
-        insertionMethod       = $this.data('association-insertion-method') || $this.data('association-insertion-position') || 'before';
+        insertionMethod       = $this.data('association-insertion-method') || $this.data('association-insertion-position') || 'before',
         insertionNode         = $this.data('association-insertion-node'),
         insertionCallback     = $this.data('insertion-callback'),
         removalCallback       = $this.data('removal-callback'),
@@ -46,23 +50,29 @@
     // to be called on the node.  allows the insertion node to be the parent of the inserted
     // code and doesn't force it to be a sibling like after/before does. default: 'before'
     insertionNode[insertionMethod](contentNode);
-
-    $this.parent().trigger('insertion-callback');
+    
+    $this.parent().trigger('insertion-callback', contentNode);
   });
 
   $('.remove_fields.dynamic').live('click', function(e) {
-    var $this = $(this);
-    trigger_removal_callback($this);
+    var $this   = $(this),
+        $node   = $this.closest(".nested-fields"),
+        $trigOn = $node.parent();
+    trigger_removal_callback($trigOn, $node);
     e.preventDefault();
-    $this.closest(".nested-fields").remove();
+    $node.remove();
+    trigger_after_removal_callback($trigOn, $node);
   });
 
   $('.remove_fields.existing').live('click', function(e) {
-    var $this = $(this);
-    trigger_removal_callback($this);
+    var $this  = $(this),
+        $node  = $this.closest(".nested-fields"),
+        $trigOn = $node.parent();
+    trigger_removal_callback($trigOn, $node);
     e.preventDefault();
     $this.prev("input[type=hidden]").val("1");
-    $this.closest(".nested-fields").hide();
+    $node.hide();
+    trigger_after_removal_callback($trigOn, $node);
   });
 
 })(jQuery);
